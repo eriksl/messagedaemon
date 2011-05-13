@@ -16,10 +16,10 @@ using boost::bad_lexical_cast;
 
 const char * HttpServer::id_cookie_name = "msgd.display.id";
 
-int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap &) const
 {
 	string					data, text, id;
-	HttpServer::KeyValues	cookies;
+	StringStringMap			cookies;
 	string					table1, table2, td1;
 	bool					hastemp;
 	string					temp;
@@ -32,18 +32,11 @@ int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &
 	table2	=	"<table style=\"width: 100%; border: solid 1px black;\">";
 	td1		=	"<td style=\"width: 10%;\">";
 
-	if(method != "GET")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
-	if(con_cls->callback_count != 0)
-		return(MHD_NO);
+	//if(con_cls->callback_count != 0)
+		//return(MHD_NO);
 
 	cookies = get_http_values(connection, MHD_COOKIE_KIND);
-
-	if(cookies.data.find(id_cookie_name) == cookies.data.end())
-		id = "";
-	else
-		id = cookies.data[id_cookie_name];
+	id = cookies(id_cookie_name);
 
 	hastemp = false;
 	device->lock();
@@ -145,31 +138,24 @@ int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &
 	return(send_html(connection, "/", MHD_HTTP_OK, data, 30, "", id_cookie_name, id));
 }
 
-int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string & method, ConnectionData *, const StringStringMap & variables) const
 {
 	string data, text;
 	bool last = false;
 	string id = "";
 	size_t ix;
 
-	HttpServer::KeyValues	responses;
-	HttpServer::KeyValues	headers;
-	HttpServer::KeyValues	cookies;
-	HttpServer::KeyValues	postdata;
-	HttpServer::KeyValues	arguments;
-	HttpServer::KeyValues	footer;
+	StringStringMap	responses;
+	StringStringMap	headers;
+	StringStringMap	cookies;
+	StringStringMap	footer;
 
 	TextEntry te;
     TextEntryAttributes::iterator it;
 
-	if(method != "GET" && method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
 	responses	= get_http_values(connection, MHD_RESPONSE_HEADER_KIND);
 	headers		= get_http_values(connection, MHD_HEADER_KIND);
 	cookies		= get_http_values(connection, MHD_COOKIE_KIND);
-	postdata	= get_http_values(connection, MHD_POSTDATA_KIND);
-	arguments	= get_http_values(connection, MHD_GET_ARGUMENT_KIND);
 	footer		= get_http_values(connection, MHD_FOOTER_KIND);
 	
 	data += string("<p>method: ") + method + "</p>";
@@ -179,14 +165,10 @@ int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string 
 	data += headers.dump(true);
 	data +=	"</p>\n<p>cookies";
 	data += cookies.dump(true);
-	data +=	"</p>\n<p>postdata arguments";
-	data += postdata.dump(true);
 	data +=	"</p>\n<p>http footer";
 	data += footer.dump(true);
-	data +=	"</p>\n<p>GET arguments";
-	data += arguments.dump(true);
-	data += "</p>\n<p>post args";
-	data +=	con_cls->values.dump(true);
+	data +=	"</p>\n<p>POST / GET arguments";
+	data += variables.dump(true);
 
 	stringstream freeze_ss;
 	freeze_ss << text_entries.get_freeze_timeout();
@@ -282,37 +264,25 @@ int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string 
 	return(send_html(connection, "debug", MHD_HTTP_OK, data, 5));
 };
 
-int HttpServer::page_dispatcher_display(MHD_Connection * connection, const string & method, ConnectionData *) const
+int HttpServer::page_dispatcher_display(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap &) const
 {
 	string							id;
-	HttpServer::KeyValues			cookies;
+	StringStringMap					cookies;
     TextEntryAttributes::iterator	it;
 
-	if(method != "GET" && method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
 	cookies = get_http_values(connection, MHD_COOKIE_KIND);
-
-	if(cookies.data.find(id_cookie_name) == cookies.data.end())
-		id = "";
-	else
-		id = cookies.data[id_cookie_name];
+	id = cookies(id_cookie_name);
 
 	return(send_html(connection, "display", MHD_HTTP_OK, dev_text_to_html(id, "1000pt", "160pt", "monospace", "500%"), 5, "", id_cookie_name, id));
 };
 
-int HttpServer::page_dispatcher_remove(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_remove(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {
 	string	id;
 	string	data;
 
-	if(method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
-	if(con_cls->values.data.find("id") == con_cls->values.data.end())
+	if((id = variables("id")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: id"));
-
-	id = con_cls->values.data["id"];
 
 	try
 	{
@@ -327,24 +297,18 @@ int HttpServer::page_dispatcher_remove(MHD_Connection * connection, const string
 	return(send_html(connection, "remove", MHD_HTTP_OK, data, 1, "/"));
 };
 
-int HttpServer::page_dispatcher_standout(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_standout(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {
 	string		id;
 	string		value;
 	string		data;
 	TextEntry	te;
 
-	if(method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
-	if(con_cls->values.data.find("id") == con_cls->values.data.end())
+	if((id = variables("id")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: id"));
 
-	if(con_cls->values.data.find("value") == con_cls->values.data.end())
+	if((value = variables("value")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: value"));
-
-	id = con_cls->values.data["id"];
-	value = con_cls->values.data["value"];
 
 	try
 	{
@@ -381,7 +345,7 @@ int HttpServer::page_dispatcher_standout(MHD_Connection * connection, const stri
 	return(send_html(connection, "standout", MHD_HTTP_OK, data, 5, "/"));
 };
 
-int HttpServer::page_dispatcher_insert(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_insert(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {
 	string		id;
 	string		value;
@@ -389,28 +353,17 @@ int HttpServer::page_dispatcher_insert(MHD_Connection * connection, const string
 	string		expiry;
 	string		freeze;
 
-	if(method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
-	if(con_cls->values.data.find("id") == con_cls->values.data.end())
+	if((id = variables("id")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: id"));
-	else
-		id = con_cls->values.data["id"];
 
-	if(con_cls->values.data.find("value") == con_cls->values.data.end())
+	if((value = variables("value")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: value"));
-	else
-		value = con_cls->values.data["value"];
 
-	if(con_cls->values.data.find("expiry") == con_cls->values.data.end())
+	if((expiry = variables("expiry")) == "")
 		expiry = "60";
-	else
-		expiry = con_cls->values.data["expiry"];
 
-	if(con_cls->values.data.find("freeze") == con_cls->values.data.end())
+	if((freeze = variables("freeze")) == "")
 		freeze = "off";
-	else
-		freeze = con_cls->values.data["freeze"];
 
 	TextEntry te(id, value, strtol(expiry.c_str(), 0, 10));
 
@@ -431,11 +384,8 @@ int HttpServer::page_dispatcher_insert(MHD_Connection * connection, const string
 	return(send_html(connection, "insert", MHD_HTTP_OK, data, 5, "/"));
 };
 
-int HttpServer::page_dispatcher_temperature(MHD_Connection * connection, const string & method, ConnectionData *) const
+int HttpServer::page_dispatcher_temperature(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap &) const
 {
-	if((method != "POST") && (method != "GET"))
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
 	string temperature;
 
 	try
@@ -457,17 +407,12 @@ int HttpServer::page_dispatcher_temperature(MHD_Connection * connection, const s
 	return(send_html(connection, "temperature", MHD_HTTP_OK, data, 5, "/"));
 }
 
-int HttpServer::page_dispatcher_brightness(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_brightness(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {
-	if((method != "POST") && (method != "GET"))
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
 	string value;
 
-	if(con_cls->values.data.find("value") == con_cls->values.data.end())
+	if((value = variables("value")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: value"));
-	else
-		value = con_cls->values.data["value"];
 
 	string result;
 
@@ -489,17 +434,12 @@ int HttpServer::page_dispatcher_brightness(MHD_Connection * connection, const st
 	return(send_html(connection, "brightness", MHD_HTTP_OK, data, 5, "/"));
 }
 
-int HttpServer::page_dispatcher_beep(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_beep(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {
-	if(method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
 	string pitch;
 
-	if(con_cls->values.data.find("pitch") == con_cls->values.data.end())
+	if((pitch = variables("pitch")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: pitch"));
-	else
-		pitch = con_cls->values.data["pitch"];
 
 	string result;
 
@@ -526,17 +466,12 @@ int HttpServer::page_dispatcher_beep(MHD_Connection * connection, const string &
 	return(send_html(connection, "beep", MHD_HTTP_OK, data, 5, "/"));
 }
 
-int HttpServer::page_dispatcher_read_analog(MHD_Connection * connection, const string & method, ConnectionData * con_cls) const
+int HttpServer::page_dispatcher_read_analog(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {
-	if(method != "POST")
-		return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
-
 	string input, value, error;
 
-	if(con_cls->values.data.find("input") == con_cls->values.data.end())
+	if((input = variables("input")) == "")
 		return(http_error(connection, MHD_HTTP_BAD_REQUEST, "Missing POST-value: input"));
-	else
-		input = con_cls->values.data["input"];
 
 	try
 	{	
@@ -562,4 +497,3 @@ int HttpServer::page_dispatcher_read_analog(MHD_Connection * connection, const s
 
 	return(send_html(connection, "read_analog", MHD_HTTP_OK, data, 5, "/"));
 }
-

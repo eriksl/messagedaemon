@@ -12,43 +12,11 @@ using std::stringstream;
 #include "http_server.h"
 #include "syslog.h"
 
-string HttpServer::KeyValues::dump(bool html) const
-{
-	string rv;
-	map<string, string>::const_iterator it;
-
-	if(html)
-		rv = "<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\">\n";
-
-	for(it = data.begin(); it != data.end(); it++)
-	{
-		if(html)
-			rv += "<tr><td>\n";
-
-		rv += it->first;
-
-		if(html)
-			rv += "</td><td>\n";
-		else
-			rv += " = ";
-
-		rv += it->second;
-
-		if(html)
-			rv += "</td></tr>\n";
-		else
-			rv += "\n";
-	}
-
-	if(html)
-		rv += "</table>\n";
-
-	return(rv);
-}
-
 HttpServer::HttpServer(TextEntries & te_in, Device * dev, int tcp_port, bool multithread_in) throw(string)
 	: device(dev), text_entries(te_in), multithread(multithread_in)
 {
+	int multithread_option = multithread ? MHD_USE_THREAD_PER_CONNECTION : 0;
+
 	page_dispatcher_map["/"]				=  &HttpServer::page_dispatcher_root;
 	page_dispatcher_map["/debug"]			=  &HttpServer::page_dispatcher_debug;
 	page_dispatcher_map["/display"]			=  &HttpServer::page_dispatcher_display;
@@ -60,16 +28,10 @@ HttpServer::HttpServer(TextEntries & te_in, Device * dev, int tcp_port, bool mul
 	page_dispatcher_map["/beep"]			=  &HttpServer::page_dispatcher_beep;
 	page_dispatcher_map["/read_analog"]		=  &HttpServer::page_dispatcher_read_analog;
 
-	if(multithread)
-		daemon = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION | MHD_USE_IPv6 | MHD_USE_DEBUG,
-				tcp_port, 0, 0, &HttpServer::access_handler_callback, this,
-				MHD_OPTION_NOTIFY_COMPLETED, &HttpServer::callback_request_completed, this,
-				MHD_OPTION_END);
-	else
-		daemon = MHD_start_daemon(MHD_USE_IPv6 | MHD_USE_DEBUG,
-				tcp_port, 0, 0, &HttpServer::access_handler_callback, this,
-				MHD_OPTION_NOTIFY_COMPLETED, &HttpServer::callback_request_completed, this,
-				MHD_OPTION_END);
+	daemon = MHD_start_daemon(multithread_option | MHD_USE_IPv6 | MHD_USE_DEBUG,
+			tcp_port, 0, 0, &HttpServer::access_handler_callback, this,
+			MHD_OPTION_NOTIFY_COMPLETED, &HttpServer::callback_request_completed, this,
+			MHD_OPTION_END);
 
 	if(daemon == 0)
 		throw(string("Cannot start http daemon"));
@@ -84,12 +46,19 @@ HttpServer::~HttpServer() throw(string)
 void HttpServer::poll(int timeout) throw(string)
 {
 	if(multithread)
-		usleep(timeout);
+	{
+		if(timeout < 0)
+			for(;;)
+				sleep(65536);
+		else
+			usleep(timeout);
+	}
 	else
 	{
-		fd_set			read_fd_set, write_fd_set, except_fd_set;
-		int				max_fd = 0;
-		struct timeval	tv;
+		fd_set				read_fd_set, write_fd_set, except_fd_set;
+		int					max_fd = 0;
+		struct timeval		tv;
+		struct timeval *	tvp;
 
 		FD_ZERO(&read_fd_set);
 		FD_ZERO(&write_fd_set);
@@ -98,15 +67,21 @@ void HttpServer::poll(int timeout) throw(string)
 		if(MHD_get_fdset(daemon, &read_fd_set, &write_fd_set, &except_fd_set, &max_fd) == MHD_NO)
 			throw(string("error in MHD_get_fdset"));
 
-		tv.tv_sec	= timeout / 1000000;
-		tv.tv_usec	= (timeout % 1000000);
+		if(timeout >= 0)
+		{
+			tv.tv_sec	= timeout / 1000000;
+			tv.tv_usec	= (timeout % 1000000);
+			tvp = &tv;
+		}
+		else
+			tvp = 0;
 
-		if(select(max_fd + 1, &read_fd_set, &write_fd_set, &except_fd_set, &tv) != 0)
+		if(select(max_fd + 1, &read_fd_set, &write_fd_set, &except_fd_set, tvp) != 0)
 			MHD_run(daemon);
 	}
 }
 
-string HttpServer::html_header(const string & title, int reload, string reload_url)
+string HttpServer::html_header(const string & title, int reload, string reload_url, string cssurl)
 {
 	stringstream	ss;
 	string			refresh_header;
@@ -122,14 +97,18 @@ string HttpServer::html_header(const string & title, int reload, string reload_u
 		refresh_header += "\"/>\n";
 	}
 
+	if(cssurl != "")
+		cssurl = "<link rel=\"stylesheet\" href=\"/style.css\"/>";
+
 	return(string("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n") +
 				"<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n" +
-    			"    <head>\n" +
-        		"        <meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\"/>\n" +
+				"    <head>\n" +
+				"        <meta http-equiv=\"Content-type\" content=\"text/html; charset=UTF-8\"/>\n" +
+				cssurl +
 				refresh_header +
-        		"        <title>" + title + "</title>\n" + 
-    			"    </head>\n" +
-    			"    <body>\n");
+				"        <title>" + title + "</title>\n" + 
+				"    </head>\n" +
+				"    <body>\n");
 }
 
 string HttpServer::html_footer()
@@ -138,20 +117,15 @@ string HttpServer::html_footer()
 				"</html>\n");
 }
 
-int HttpServer::send_html(MHD_Connection * connection, const string & title, int http_code,
-			const string & message, int reload, const string & reload_url,
+int HttpServer::send_raw(MHD_Connection * connection, int http_code,
+			const string & data, const string & data_mime,
 			const string & cookie_id, const string & cookie_value) const throw(string)
 {
 	int						rv;
-	string					data;
 	struct MHD_Response	*	response;
 
-	data = html_header(title, reload, reload_url);
-	data += message;
-	data += html_footer();
-
 	response = MHD_create_response_from_data(data.size(), (void *)data.c_str(), MHD_NO, MHD_YES);
-	MHD_add_response_header(response, "Content-Type", "text/html");
+	MHD_add_response_header(response, "Content-Type", data_mime.c_str());
 
 	if(cookie_id.size())
 	{
@@ -163,6 +137,19 @@ int HttpServer::send_html(MHD_Connection * connection, const string & title, int
 	MHD_destroy_response(response);
 
 	return(rv);
+}
+
+int HttpServer::send_html(MHD_Connection * connection, const string & title, int http_code,
+			const string & message, int reload, const string & reload_url,
+			const string & cookie_id, const string & cookie_value) const throw(string)
+{
+	string					data;
+
+	data = html_header(title, reload, reload_url, "/style.css");
+	data += message;
+	data += html_footer();
+
+	return(send_raw(connection, http_code, data, "text/html", cookie_id, cookie_value));
 }
 
 int HttpServer::http_error(MHD_Connection * connection, int http_code, const string & message) const throw(string)
@@ -305,7 +292,19 @@ int HttpServer::access_handler(struct MHD_Connection * connection,
 	if(it != page_dispatcher_map.end())
 	{
 		fn = it->second;
-		return((this->*fn)(connection, method, con_cls));
+
+		StringStringMap variables;
+
+		if((method != "GET") && (method != "POST"))
+			return(http_error(connection, MHD_HTTP_METHOD_NOT_ALLOWED, "Method not allowed"));
+
+		if(method == "POST")
+			variables = con_cls->values;
+
+		StringStringMap get_arguments = get_http_values(connection, MHD_GET_ARGUMENT_KIND);
+		variables.insert(get_arguments.begin(), get_arguments.end());
+
+		return((this->*fn)(connection, method, con_cls, variables));
 	}
 
 	return(http_error(connection, MHD_HTTP_NOT_FOUND, string("URI ") + url + " not found"));
@@ -313,16 +312,16 @@ int HttpServer::access_handler(struct MHD_Connection * connection,
 
 int HttpServer::callback_keyvalue_iterator(void * cls, enum MHD_ValueKind, const char * key, const char * value)
 {
-	KeyValues * rv = (KeyValues *)cls;
+	StringStringMap * rv = (StringStringMap *)cls;
 
-	rv->data[string(key)] = string(value);
+	(*rv)[string(key)] = string(value);
 
 	return(MHD_YES);
 }
 
-HttpServer::KeyValues HttpServer::get_http_values(struct MHD_Connection * connection, enum MHD_ValueKind kind) const
+StringStringMap HttpServer::get_http_values(struct MHD_Connection * connection, enum MHD_ValueKind kind) const
 {
-	KeyValues rv;
+	StringStringMap rv;
 
 	MHD_get_connection_values(connection, kind, callback_keyvalue_iterator, &rv);
 
@@ -356,6 +355,6 @@ int HttpServer::callback_postdata_iterator(void * con_cls, enum MHD_ValueKind,
 	ConnectionData * condata = (ConnectionData *)con_cls;
 
 	mangle.append(data, size);
-	condata->values.data[key] = mangle;
+	condata->values[key] = mangle;
 	return(MHD_YES);
 }
