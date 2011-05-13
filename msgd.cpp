@@ -58,6 +58,12 @@ static void sigint(int)
 	quit = true;
 }
 
+static void sigterm(int)
+{
+	signal(SIGTERM, SIG_DFL);
+	quit = true;
+}
+
 static void msgd_internal_throw(const string & error)
 {
 	string errormessage = string("error caught, message = ") + error;
@@ -225,6 +231,7 @@ int main(int argc, char ** argv)
 		deviceid = device->identify();
 
 		signal(SIGINT, sigint);
+		signal(SIGTERM, sigterm);
 
 		if(!foreground)
 			daemon(0, 0);

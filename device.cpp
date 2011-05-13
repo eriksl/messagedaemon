@@ -62,8 +62,6 @@ void Device::open() throw(string)
 void Device::close()
 {
 	__close();
-
-
 	_opened = false;
 }
 

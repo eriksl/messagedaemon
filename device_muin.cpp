@@ -1,3 +1,6 @@
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+
 #include "syslog.h"
 #include "device_muin.h"
 
@@ -24,6 +27,7 @@ void DeviceMuin::__init() throw(string)
 
 void DeviceMuin::__setbright(int value) throw(string)
 {
+vlog((string("* setbright ") + lexical_cast<string>(value) + "\n").c_str());
 	static const int value2brightness[] =
 	{
 		0,	//  off

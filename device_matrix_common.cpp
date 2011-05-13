@@ -47,6 +47,7 @@ void DeviceMatrixCommon::__close()
 	try
 	{
 		clear();
+		_brightness = 0;
 		__update();
 	}
 	catch(...)
