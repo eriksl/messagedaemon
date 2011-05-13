@@ -1,8 +1,5 @@
 #include <string.h>
 
-#include <sstream>
-using std::ostringstream;
-
 #include <iomanip>
 using std::right;
 using std::left;

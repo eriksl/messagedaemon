@@ -6,8 +6,9 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 
-#include <sstream>
-using std::stringstream;
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+using boost::bad_lexical_cast;
 
 #include "http_server.h"
 #include "syslog.h"
@@ -83,13 +84,24 @@ void HttpServer::poll(int timeout) throw(string)
 
 string HttpServer::html_header(const string & title, int reload, string reload_url, string cssurl)
 {
-	stringstream	ss;
+	string			refresh_string;
 	string			refresh_header;
 
 	if(reload)
 	{
-		ss << reload;
-		refresh_header = "        <meta http-equiv=\"Refresh\" content=\"" + ss.str();
+		try
+		{
+			refresh_string = lexical_cast<string>(reload);
+		}
+		catch(bad_lexical_cast)
+		{
+			reload = 0;
+		}
+	}
+
+	if(reload)
+	{
+		refresh_header = "        <meta http-equiv=\"Refresh\" content=\"" + refresh_string;
 
 		if(reload_url.size() != 0)
 			refresh_header += ";url=" + reload_url;

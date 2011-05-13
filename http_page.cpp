@@ -4,9 +4,6 @@
 #include <pthread.h>
 #include <sys/socket.h>
 
-#include <sstream>
-using std::stringstream;
-
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
@@ -43,12 +40,12 @@ int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &
 
 	try
 	{	
-		stringstream ss;
 		hastemp = device->hastemperature();
-		ss << device->temperature();
-		temp = ss.str();
+
+		if(hastemp)
+			temp = lexical_cast<string>(device->temperature());
 	}
-	catch(...)
+	catch(bad_lexical_cast)
 	{
 		hastemp = false;
 	}
@@ -170,13 +167,21 @@ int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string 
 	data +=	"</p>\n<p>POST / GET arguments";
 	data += variables.dump(true);
 
-	stringstream freeze_ss;
-	freeze_ss << text_entries.get_freeze_timeout();
+	string freeze_timeout;
+
+	try
+	{
+		freeze_timeout = lexical_cast<string>(text_entries.get_freeze_timeout());
+	}
+	catch(bad_lexical_cast)
+	{
+		freeze_timeout = "*";
+	}
 
 	data += "</p>\n<p>frozen: ";
 	data += string(text_entries.frozen() ? "yes" : "no");
 	data += ", id: " + text_entries.get_freeze_id();
-	data += ", timeout: " + freeze_ss.str();
+	data += ", timeout: " + freeze_timeout;
 	data += "</p>\n";
 
 	data += "<table border=\"1\" cellspacing=\"0\" cellpadding=\"1\">\n";
@@ -208,9 +213,18 @@ int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string 
 			data += "<td>none</td>";
 		else
 		{
-			stringstream expire_ss;
-			expire_ss << te.expire - time(0);
-			data += "<td>" + expire_ss.str() + "</td>";
+			string expire_string;
+
+			try
+			{
+				expire_string = lexical_cast<string>(te.expire - time(0));
+			}
+			catch(bad_lexical_cast)
+			{
+				expire_string = "*";
+			}
+
+			data += "<td>" + expire_string + "</td>";
 		}
 
 		text = te.text;
@@ -224,40 +238,53 @@ int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string 
 
 	data += "</table>\n";
 
-	string temp;
+	int temp;
+	string temp_string;
 	bool hastemp = false;
+
+	device->lock();
 
 	try
 	{	
-		stringstream ss;
-		device->lock();
-		hastemp = device->hastemperature();
-		ss << device->temperature();
-		temp = ss.str();
-		device->unlock();
+		hastemp	= device->hastemperature();
+		temp	= device->temperature();
 	}
 	catch(string e)
 	{
-		device->unlock();
-		temp = string("error: ") + e;
+		hastemp	= false;
+		temp	= -1;
 	}
 
+	device->unlock();
+
 	if(hastemp)
-		data += string("<p>temperature = \"") + temp + "\"</p>\n";
+	{
+		try
+		{
+			temp_string = lexical_cast<string>(temp);
+		}
+		catch(bad_lexical_cast)
+		{
+			temp_string = "*";
+		}
+
+		data += string("<p>temperature = \"") + temp_string + "\"</p>\n";
+	}
 
 	string ident;
 
+	device->lock();
+
 	try
 	{	
-		device->lock();
 		ident = device->identify();
-		device->unlock();
 	}
 	catch(string e)
 	{
-		device->unlock();
-		temp = string("error: ") + e;
+		ident = string("error: ") + e;
 	}
+
+	device->unlock();
 
 	data += string("<p>identification = \"") + ident + "\"</p>\n";
 
@@ -386,23 +413,26 @@ int HttpServer::page_dispatcher_insert(MHD_Connection * connection, const string
 
 int HttpServer::page_dispatcher_temperature(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap &) const
 {
-	string temperature;
+	string	temp;
+
+	device->lock();
 
 	try
 	{	
-		stringstream ss;
-		device->lock();
-		ss << device->temperature();
-		temperature = ss.str();
-		device->unlock();
+		temp = lexical_cast<string>(device->temperature());
 	}
 	catch(string e)
 	{
-		device->unlock();
-		temperature = string("error: ") + e;
+		temp = string("error: ") + e;
+	}
+	catch(bad_lexical_cast)
+	{
+		temp = string("error: conversion");
 	}
 
-	string data = string("<p>temperature = \"") + temperature + "\"</p>\n";
+	device->unlock();
+
+	string data = string("<p>temperature = \"") + temp + "\"</p>\n";
 
 	return(send_html(connection, "temperature", MHD_HTTP_OK, data, 5, "/"));
 }
