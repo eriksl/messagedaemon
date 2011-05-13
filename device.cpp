@@ -338,24 +338,6 @@ void Device::beep(int pitch) throw(string)
 	__beep(pitch);
 }
 
-bool Device::hastemperature() const throw()
-{
-	return(false);
-}
-
-int Device::__temperature() throw(string)
-{
-	throw(string("not implemented"));
-}
-
-int Device::temperature() throw(string)
-{
-	if(!_opened)
-		throw(string("Device::temperature: device not open"));
-
-	return(__temperature());
-}
-
 int Device::__read_analog(int) throw(string)
 {
 	throw(string("Device::__read_analog: function not implemented"));

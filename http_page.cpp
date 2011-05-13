@@ -18,8 +18,6 @@ int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &
 	string					data, text, id;
 	StringStringMap			cookies;
 	string					table1, table2, td1;
-	bool					hastemp;
-	string					temp;
 	bool					canbeep;
 	int						analog_inputs;
 	int						max_analog;
@@ -35,20 +33,7 @@ int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &
 	cookies = get_http_values(connection, MHD_COOKIE_KIND);
 	id = cookies(id_cookie_name);
 
-	hastemp = false;
 	device->lock();
-
-	try
-	{	
-		hastemp = device->hastemperature();
-
-		if(hastemp)
-			temp = lexical_cast<string>(device->temperature());
-	}
-	catch(bad_lexical_cast)
-	{
-		hastemp = false;
-	}
 
 	try
 	{	
@@ -106,9 +91,6 @@ int HttpServer::page_dispatcher_root(MHD_Connection * connection, const string &
 	data += "<tr><td><form method=\"post\" action=\"/remove\">" + table2 + "<tr><td><select name=\"id\">" + text_entries_to_options() + "</select></td>" + td1 + "<input type=\"submit\" value=\"remove\"/></td></tr></table></form></td></tr>\n";
 	data += "<tr><td><form method=\"post\" action=\"/standout\">" + table2 + "<tr><td><select name=\"id\">" + text_entries_to_options() + "</select></td><td><input type=\"radio\" name=\"value\" value=\"off\" checked=\"checked\"/>off<input type=\"radio\" name=\"value\" value=\"on\"/>on</td>" + td1 + "<input type=\"submit\" value=\"set standout\"/></td></tr></table></form></td></tr>\n";
 	data += "<tr><td><form method=\"post\" action=\"/brightness\">" + table2 + "<tr><td><input type=\"radio\" name=\"value\" value=\"0\"/>off<input type=\"radio\" name=\"value\" value=\"1\"/>very dim<input type=\"radio\" name=\"value\" value=\"2\"/>dim<input type=\"radio\" name=\"value\" value=\"3\" checked=\"checked\"/>normal<input type=\"radio\" name=\"value\" value=\"4\"/>bright</td>" + td1 + "<input type=\"submit\" value=\"set brightness\"/></td></tr></table></form></td></tr>\n";
-
-	if(hastemp)
-		data += "<tr><td><form method=\"post\" action=\"/temperature\">" + table2 + "<tr><td>" + temp + "</td>" + td1 + "<input type=\"submit\" value=\"get temperature\"/></td></tr></table></form></td></tr>\n";
 
 	if(canbeep)
 		data += "<tr><td><form method=\"post\" action=\"/beep\">" + table2 + "<tr><td><input type=\"radio\" name=\"pitch\" value=\"0\"/>0%<input type=\"radio\" name=\"pitch\" value=\"1\"/>25%<input type=\"radio\" name=\"pitch\" value=\"2\"/>50%<input type=\"radio\" name=\"pitch\" value=\"3\" checked=\"checked\"/>75%<input type=\"radio\" name=\"pitch\" value=\"4\"/>100%</td>" + td1 + "<input type=\"submit\" value=\"beep\"/></td></tr></table></form></td></tr>\n";
@@ -237,39 +219,6 @@ int HttpServer::page_dispatcher_debug(MHD_Connection * connection, const string 
     }
 
 	data += "</table>\n";
-
-	int temp;
-	string temp_string;
-	bool hastemp = false;
-
-	device->lock();
-
-	try
-	{	
-		hastemp	= device->hastemperature();
-		temp	= device->temperature();
-	}
-	catch(string e)
-	{
-		hastemp	= false;
-		temp	= -1;
-	}
-
-	device->unlock();
-
-	if(hastemp)
-	{
-		try
-		{
-			temp_string = lexical_cast<string>(temp);
-		}
-		catch(bad_lexical_cast)
-		{
-			temp_string = "*";
-		}
-
-		data += string("<p>temperature = \"") + temp_string + "\"</p>\n";
-	}
 
 	string ident;
 
@@ -410,32 +359,6 @@ int HttpServer::page_dispatcher_insert(MHD_Connection * connection, const string
 
 	return(send_html(connection, "insert", MHD_HTTP_OK, data, 5, "/"));
 };
-
-int HttpServer::page_dispatcher_temperature(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap &) const
-{
-	string	temp;
-
-	device->lock();
-
-	try
-	{	
-		temp = lexical_cast<string>(device->temperature());
-	}
-	catch(string e)
-	{
-		temp = string("error: ") + e;
-	}
-	catch(bad_lexical_cast)
-	{
-		temp = string("error: conversion");
-	}
-
-	device->unlock();
-
-	string data = string("<p>temperature = \"") + temp + "\"</p>\n";
-
-	return(send_html(connection, "temperature", MHD_HTTP_OK, data, 5, "/"));
-}
 
 int HttpServer::page_dispatcher_brightness(MHD_Connection * connection, const string &, ConnectionData *, const StringStringMap & variables) const
 {

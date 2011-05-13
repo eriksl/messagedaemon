@@ -91,7 +91,6 @@ class HttpServer
 		int page_dispatcher_standout	(MHD_Connection *, const string & method, ConnectionData * con_cls, const StringStringMap & variables) const;
 		int page_dispatcher_insert		(MHD_Connection *, const string & method, ConnectionData * con_cls, const StringStringMap & variables) const;
 		int page_dispatcher_brightness	(MHD_Connection *, const string & method, ConnectionData * con_cls, const StringStringMap & variables) const;
-		int page_dispatcher_temperature	(MHD_Connection *, const string & method, ConnectionData * con_cls, const StringStringMap & variables) const;
 		int page_dispatcher_beep		(MHD_Connection *, const string & method, ConnectionData * con_cls, const StringStringMap & variables) const;
 		int page_dispatcher_read_analog	(MHD_Connection *, const string & method, ConnectionData * con_cls, const StringStringMap & variables) const;
 

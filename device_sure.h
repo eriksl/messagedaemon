@@ -26,17 +26,18 @@ class DeviceSure : public Device
 
 	protected:
 
-		int		__temperature() throw(string);
+		int		__read_analog(int) throw(string);
 
 	public:
 
 				DeviceSure(string device) throw(string);
 				~DeviceSure();
 
-		int		width() const;
-		int		height() const;
-		string	identify() const throw();
-		bool	hastemperature() const throw();
+		int		width()			const;
+		int		height()		const;
+		string	identify()		const throw();
+		int		analog_inputs()	const throw();
+		int		max_analog()	const throw();
 };
 
 #endif

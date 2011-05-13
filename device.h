@@ -40,7 +40,6 @@ class Device
 		virtual void		__update()					throw(string)	= 0;
 		virtual void		__open()					throw(string)	= 0;
 		virtual	void		__close()									= 0;
-		virtual int			__temperature()				throw(string);
 		virtual void		__beep(int)					throw(string);
 		virtual int			__read_analog(int)			throw(string);
 
@@ -89,8 +88,6 @@ class Device
 		virtual string	identify() const throw();
 		virtual bool	canbeep() const throw();
 		virtual void	beep(int) throw(string);
-		virtual	bool	hastemperature() const throw();
-		virtual int		temperature() throw(string);
 		virtual int		analog_inputs() const throw();
 		virtual int		read_analog(int input) throw(string);
 		virtual int		max_analog() const throw(string);

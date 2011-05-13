@@ -25,7 +25,6 @@ HttpServer::HttpServer(TextEntries & te_in, Device * dev, int tcp_port, bool mul
 	page_dispatcher_map["/standout"]		=  &HttpServer::page_dispatcher_standout;
 	page_dispatcher_map["/insert"]			=  &HttpServer::page_dispatcher_insert;
 	page_dispatcher_map["/brightness"]		=  &HttpServer::page_dispatcher_brightness;
-	page_dispatcher_map["/temperature"]		=  &HttpServer::page_dispatcher_temperature;
 	page_dispatcher_map["/beep"]			=  &HttpServer::page_dispatcher_beep;
 	page_dispatcher_map["/read_analog"]		=  &HttpServer::page_dispatcher_read_analog;
 

@@ -6,6 +6,10 @@
 #include <unistd.h>
 #include <poll.h>
 
+#include <boost/lexical_cast.hpp>
+using boost::lexical_cast;
+using boost::bad_lexical_cast;
+
 #include "device.h"
 #include "device_sure.h"
 #include "syslog.h"
@@ -299,19 +303,23 @@ void DeviceSure::__update() throw(string)
 	_setbright(_brightness);
 }
 
-bool DeviceSure::hastemperature() const throw()
+int DeviceSure::analog_inputs() const throw()
 {
-	return(true);
+	return(1);
 }
 
-int DeviceSure::__temperature() throw(string)
+int DeviceSure::max_analog() const throw()
+{
+	return(100);
+}
+
+int DeviceSure::__read_analog(int) throw(string)
 {
 	char	command[16];
+	char *	cptr;
 	int		tries;
 	bool	done;
-
-	if(_fd == -1)
-		throw(string("DeviceSure::temperature: device not open"));
+	int		rv;
 
 	for(done = false, tries = 10; !done && (tries > 0); tries--)
 	{
@@ -334,9 +342,23 @@ int DeviceSure::__temperature() throw(string)
 	}
 
 	if(!done)
-		throw(string("DeviceSure::temperature::timeout"));
+		throw(string("DeviceSure::__read_analog::timeout"));
 
-	command[3] = 0;
-	return(strtol(command, 0, 0));
+	command[3] = '\0';
+
+	cptr = command;
+
+	if(*cptr == ' ')
+		cptr++;
+
+	try
+	{
+		rv = lexical_cast<int>(cptr);
+	}
+	catch(bad_lexical_cast)
+	{
+		rv = -1;
+	}
+
+	return(rv);
 }
-
