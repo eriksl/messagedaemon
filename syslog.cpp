@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <errno.h>
 #include <stdarg.h>
 #include <syslog.h>

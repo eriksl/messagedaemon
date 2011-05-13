@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <string.h>
 
 #include <iomanip>

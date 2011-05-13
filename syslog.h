@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef _syslog_h_
 #define _syslog_h_
 #include <stdio.h>

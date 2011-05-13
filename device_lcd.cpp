@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <fcntl.h>
 #include <sys/ioctl.h>
 

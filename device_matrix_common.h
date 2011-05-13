@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef _device_matrix_common_h_
 #define _device_matrix_common_h_
 

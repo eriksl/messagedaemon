@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
 

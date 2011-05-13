@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef __FP_H
 #define __FP_H
 

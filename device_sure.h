@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef _device_sure_h_
 #define _device_suer_h_
 

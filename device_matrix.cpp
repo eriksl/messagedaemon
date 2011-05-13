@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include "device_matrix.h"
 
 DeviceMatrix::DeviceMatrix(string node) throw()

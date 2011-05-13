@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef _device_muin_h_
 #define _device_muin_h_
 

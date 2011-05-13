@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef _device_cf635_h_
 #define _device_cf635_h_
 

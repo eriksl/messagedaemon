@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #ifndef _stringstringmap_h_
 #define _stringstringmap_h_
 

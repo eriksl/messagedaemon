@@ -1,3 +1,5 @@
+# Copyright Erik Slagter, GPLv2 is applicable
+
 TARGET	= x86_64
 DEBUG	= off
 AOUT	= msgd

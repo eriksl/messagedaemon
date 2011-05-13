@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include "device.h"
 #include "device_tty.h"
 #include "syslog.h"

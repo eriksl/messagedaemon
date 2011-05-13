@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>

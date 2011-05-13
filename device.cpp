@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>

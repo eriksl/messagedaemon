@@ -1,3 +1,5 @@
+/* Copyright Erik Slagter, GPLv2 is applicable */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
