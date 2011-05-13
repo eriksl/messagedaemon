@@ -6,15 +6,17 @@
 #include "device.h"
 #include "device_lcd.h"
 
-#include "fp.h"
+#define FP_IOCTL_LCD_DIMM 3
+
 #include "lcd-ks0713.h"
 
 #include "syslog.h"
 
-DeviceLcd::DeviceLcd(string font) throw(string) :
+DeviceLcd::DeviceLcd(string font) throw(string) : Device()
 {
 	_lcd_fd	= -1;
-	_fp_fd	= -1
+	_fp_fd	= -1;
+	_font_name = font;
 }
 
 DeviceLcd::~DeviceLcd()
@@ -30,8 +32,8 @@ void DeviceLcd::__open() throw(string)
 	if((_lcd_fd != -1) || (_fp_fd != -1))
 		throw(string("DeviceLcd::__open: device not closed"));
 
-	if(font == "")
-		font = "/share/fonts/DejaVuSansMono-Bold.ttf";
+	if(_font_name == "")
+		_font_name = "/share/fonts/DejaVuSansMono-Bold.ttf";
 
 	if((_fp_fd = ::open("/dev/dbox/fp0", O_RDWR, 0)) < 0)
 		throw(string("DeviceLcd::DeviceLcd: cannot open front processor device"));
@@ -50,7 +52,7 @@ void DeviceLcd::__open() throw(string)
 	if(!!(error = FT_Init_FreeType(&_ft_lib)))
 		throw(string("DeviceLcd::DeviceLcd: FT_Init_FreeType"));
 
-	if(!!(error = FT_New_Face(_ft_lib, font.c_str(), 0, &_ft_face)))
+	if(!!(error = FT_New_Face(_ft_lib, _font_name.c_str(), 0, &_ft_face)))
 		throw(string("DeviceLcd::DeviceLcd: FT_New_Face"));
 
 	if(!!(error = FT_Set_Pixel_Sizes(_ft_face, 8, 18)))
@@ -93,21 +95,21 @@ int DeviceLcd::height() const
 	return(4);
 }
 
-void DeviceLcd::_plot(char * fb, int y, int x, bool on) throw(string)
+void DeviceLcd::_plot(char * fb, int yy, int xx, bool on) throw(string)
 {
 	size_t byte, bit;
 
 	if((_lcd_fd == -1) && (_fp_fd == -1))
 		throw(string("DeviceLcd::_plot: device not open"));
 
-	if(y > _size_y)
+	if(yy > _size_y)
 		return;
 
-	if(x > _size_x)
+	if(xx > _size_x)
 		return;
 
-	byte = (y >> 3) * _size_x + x;
-	bit  = (y  & 7);
+	byte = (yy >> 3) * _size_x + xx;
+	bit  = (yy  & 7);
 
 	if(bit > 7)
 		throw(string("DeviceLcd::_plot: bit > 7"));
@@ -127,7 +129,7 @@ void DeviceLcd::__update() throw(string)
 	unsigned char *	fontptr;
 	FT_GlyphSlot	slot = _ft_face->glyph;
 	int				error;
-	int				y, x, bytepos, byte, bit, bitpos, offsetx, offsety;
+	int				yy, xx, bytepos, byte, bit, bitpos, offsetx, offsety;
 	int				v;
 	char			ch;
 
@@ -162,11 +164,11 @@ void DeviceLcd::__update() throw(string)
 
 			fontptr = static_cast<typeof(fontptr)>(slot->bitmap.buffer);
 
-			for(y = 0; y < slot->bitmap.rows; y++)
+			for(yy = 0; yy < slot->bitmap.rows; yy++)
 			{
-				for(x = 0; x < slot->bitmap.pitch; x++)
+				for(xx = 0; xx < slot->bitmap.pitch; xx++)
 				{
-					bytepos = (y * slot->bitmap.pitch) + x;
+					bytepos = (yy * slot->bitmap.pitch) + xx;
 					byte	= fontptr[bytepos];
 
 					for(bitpos = 0; bitpos < 8; bitpos++)
@@ -183,8 +185,8 @@ void DeviceLcd::__update() throw(string)
 							offsetx = 0;
 
 						if(bit)
-							_plot(framebuffer, pointy + y + offsety,
-									pointx + x + offsetx + (7 - bitpos), true);
+							_plot(framebuffer, pointy + yy + offsety,
+									pointx + xx + offsetx + (7 - bitpos), true);
 					}
 				}
 			}

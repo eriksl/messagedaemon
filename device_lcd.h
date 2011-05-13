@@ -25,6 +25,7 @@ class DeviceLcd : public Device
 
 		int			_lcd_fd;
 		int			_fp_fd;
+		string		_font_name;
 
 		FT_Library	_ft_lib;
 		FT_Face		_ft_face;
@@ -37,7 +38,7 @@ class DeviceLcd : public Device
 
 	public:
 
-				DeviceLcd() throw(string);
+				DeviceLcd(string font = "") throw(string);
 				~DeviceLcd();
 		int		width() const;
 		int		height() const;
