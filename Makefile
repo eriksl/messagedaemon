@@ -119,8 +119,8 @@ ifeq ($(ENABLE_DEVICE_SURE),1)
 endif
 
 ifeq ($(ENABLE_DEVICE_DM7000),1)
-	OBJS		+= device_lcd.o
-	DEPS		+= .device_lcd.d
+	OBJS		+= device_dm7000.o
+	DEPS		+= .device_dm7000.d
 	CPPFLAGS	+= -DDEVICE_DM7000
 endif
 

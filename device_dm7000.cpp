@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "device_lcd.h"
+#include "device_dm7000.h"
 
 #define FP_IOCTL_LCD_DIMM 3
 

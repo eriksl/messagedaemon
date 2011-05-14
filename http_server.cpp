@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <string.h>
 
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;

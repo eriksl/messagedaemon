@@ -47,7 +47,7 @@ using std::string;
 #endif
 
 #if defined(DEVICE_DM7000)
-#include "device_lcd.h"
+#include "device_dm7000.h"
 #endif
 
 #include "textentry.h"
