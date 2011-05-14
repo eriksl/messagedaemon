@@ -142,9 +142,9 @@ void DeviceMatrixCommon::_command(int a, int b, int c, int d) throw(string)
 
 void DeviceMatrixCommon::_read_reply(size_t length, uint8_t * buffer) throw(string)
 {
-	int rv;
+	ssize_t rv;
 
-	if((rv = read(_fd, buffer, length)) != length)
+	if((rv = read(_fd, buffer, length)) != (ssize_t)length)
 		throw(string("DeviceMatrixCommon::_read_reply"));
 }
 

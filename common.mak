@@ -56,7 +56,8 @@ depend:		.deps
 			@$(CPP) $(CPPFLAGS) -c $< -o $@
 
 $(AOUT):	$(OBJS)
-			$(CPP) $(LDFLAGS) $^ $(LDLIBS) -o $@ 
+			@echo "LD $@"
+			@$(CPP) $(LDFLAGS) $^ $(LDLIBS) -o $@ 
 
 install:	$(AOUT)
 			@echo "INSTALL $(AOUT)"

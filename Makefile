@@ -15,7 +15,7 @@ ifeq ($(TARGET), x86_64)
 	ENABLE_DEVICE_CF634		= 1
 	ENABLE_DEVICE_CF635		= 1
 	ENABLE_DEVICE_SURE		= 1
-	ENABLE_DEVICE_LCD		= 0
+	ENABLE_DEVICE_DM7000	= 0
 	CPPFLAGS				+= -DMHD_mode_multithread
 	LDLIBS					+= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
 endif
@@ -29,7 +29,7 @@ ifeq ($(TARGET), i386)
 	ENABLE_DEVICE_CF634		= 1
 	ENABLE_DEVICE_CF635		= 1
 	ENABLE_DEVICE_SURE		= 1
-	ENABLE_DEVICE_LCD		= 0
+	ENABLE_DEVICE_DM7000	= 0
 	CPPFLAGS				+= -DMHD_mode_multithread
 	LDLIBS					+= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
 endif
@@ -43,7 +43,7 @@ ifeq ($(TARGET), mipsel)
 	ENABLE_DEVICE_CF634		= 1
 	ENABLE_DEVICE_CF635		= 1
 	ENABLE_DEVICE_SURE		= 1
-	ENABLE_DEVICE_LCD		= 0
+	ENABLE_DEVICE_DM7000	= 0
 	CPPFLAGS				+= -DMHD_mode_multithread
 	LDLIBS					+= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
 endif
@@ -57,13 +57,15 @@ ifeq ($(TARGET), ppc)
 	ENABLE_DEVICE_CF634		= 1
 	ENABLE_DEVICE_CF635		= 1
 	ENABLE_DEVICE_SURE		= 1
-	ENABLE_DEVICE_LCD		= 1
-	ifeq ($(ENABLE_DEVICE_LCD), 1)
+	ENABLE_DEVICE_DM7000	= 1
+	ifeq ($(ENABLE_DEVICE_DM7000), 1)
 		CPPFLAGS			+= -I/home/erik/src/tuxbox/root/cdkroot/include/freetype2
+		CPPFLAGS			+= -I/home/erik/src/libmicrohttpd/ppc/usr/include
 		LDLIBS				+= -lfreetype
+		LDLIBS				+= -L/home/erik/src/libmicrohttpd/ppc/usr/lib
 	endif
 	CPPFLAGS				+= -DMHD_mode_singlethread
-	LDLIBS					= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
+	LDLIBS					+= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
 endif
 
 ifeq ($(ENABLE_DEVICE_TTY),1)
@@ -116,10 +118,10 @@ ifeq ($(ENABLE_DEVICE_SURE),1)
 	CPPFLAGS	+= -DDEVICE_SURE
 endif
 
-ifeq ($(ENABLE_DEVICE_LCD),1)
+ifeq ($(ENABLE_DEVICE_DM7000),1)
 	OBJS		+= device_lcd.o
 	DEPS		+= .device_lcd.d
-	CPPFLAGS	+= -DDEVICE_LCD
+	CPPFLAGS	+= -DDEVICE_DM7000
 endif
 
 include common.mak

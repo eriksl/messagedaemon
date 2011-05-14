@@ -1,7 +1,7 @@
 /* Copyright Erik Slagter, GPLv2 is applicable */
 
-#ifndef _device_lcd_h_
-#define _device_lcd_h_
+#ifndef _device_dm7000_h_
+#define _device_dm7000_h_
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -11,7 +11,7 @@ using std::string;
 
 #include "device.h"
 
-class DeviceLcd : public Device
+class DeviceDm7000 : public Device
 {
 	private:
 
@@ -38,8 +38,8 @@ class DeviceLcd : public Device
 
 	public:
 
-				DeviceLcd(string font = "") throw(string);
-				~DeviceLcd();
+				DeviceDm7000(string font = "") throw(string);
+				~DeviceDm7000();
 		int		width() const;
 		int		height() const;
 };

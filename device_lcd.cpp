@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "device.h"
 #include "device_lcd.h"
 
 #define FP_IOCTL_LCD_DIMM 3
@@ -12,54 +11,54 @@
 
 #include "syslog.h"
 
-DeviceLcd::DeviceLcd(string font) throw(string) : Device()
+DeviceDm7000::DeviceDm7000(string font) throw(string) : Device()
 {
 	_lcd_fd	= -1;
 	_fp_fd	= -1;
 	_font_name = font;
 }
 
-DeviceLcd::~DeviceLcd()
+DeviceDm7000::~DeviceDm7000()
 {
 	__close();
 }
 
-void DeviceLcd::__open() throw(string)
+void DeviceDm7000::__open() throw(string)
 {
 	int v;
 	int error;
 
 	if((_lcd_fd != -1) || (_fp_fd != -1))
-		throw(string("DeviceLcd::__open: device not closed"));
+		throw(string("DeviceDm7000::__open: device not closed"));
 
 	if(_font_name == "")
 		_font_name = "/share/fonts/DejaVuSansMono-Bold.ttf";
 
 	if((_fp_fd = ::open("/dev/dbox/fp0", O_RDWR, 0)) < 0)
-		throw(string("DeviceLcd::DeviceLcd: cannot open front processor device"));
+		throw(string("DeviceDm7000::DeviceDm7000: cannot open front processor device"));
 
 	if((_lcd_fd = ::open("/dev/dbox/lcd0", O_RDWR, 0)) < 0)
-		throw(string("DeviceLcd::DeviceLcd: cannot open lcd device"));
+		throw(string("DeviceDm7000::DeviceDm7000: cannot open lcd device"));
 
 	if(ioctl(_lcd_fd, LCD_IOCTL_INIT))
-		throw(string("DeviceLcd::DeviceLcd: LCD_IOCTL_INIT"));
+		throw(string("DeviceDm7000::DeviceDm7000: LCD_IOCTL_INIT"));
 
 	v = 40;
 
 	if(ioctl(_lcd_fd, LCD_IOCTL_SRV, &v))
-		throw(string("DeviceLcd::DeviceLcd:: cannot set contrast"));
+		throw(string("DeviceDm7000::DeviceDm7000:: cannot set contrast"));
 
 	if(!!(error = FT_Init_FreeType(&_ft_lib)))
-		throw(string("DeviceLcd::DeviceLcd: FT_Init_FreeType"));
+		throw(string("DeviceDm7000::DeviceDm7000: FT_Init_FreeType"));
 
 	if(!!(error = FT_New_Face(_ft_lib, _font_name.c_str(), 0, &_ft_face)))
-		throw(string("DeviceLcd::DeviceLcd: FT_New_Face"));
+		throw(string("DeviceDm7000::DeviceDm7000: FT_New_Face"));
 
 	if(!!(error = FT_Set_Pixel_Sizes(_ft_face, 8, 18)))
-		throw(string("DeviceLcd::DeviceLcd:: FT_Set_Pixel_Sizes"));
+		throw(string("DeviceDm7000::DeviceDm7000:: FT_Set_Pixel_Sizes"));
 }
 
-void DeviceLcd::__close()
+void DeviceDm7000::__close()
 {
 	if((_lcd_fd != -1) && (_fp_fd != -1))
 	{
@@ -85,22 +84,22 @@ void DeviceLcd::__close()
 	}
 }
 
-int DeviceLcd::width() const
+int DeviceDm7000::width() const
 {
 	return(20);
 }
 
-int DeviceLcd::height() const
+int DeviceDm7000::height() const
 {
 	return(4);
 }
 
-void DeviceLcd::_plot(char * fb, int yy, int xx, bool on) throw(string)
+void DeviceDm7000::_plot(char * fb, int yy, int xx, bool on) throw(string)
 {
 	size_t byte, bit;
 
 	if((_lcd_fd == -1) && (_fp_fd == -1))
-		throw(string("DeviceLcd::_plot: device not open"));
+		throw(string("DeviceDm7000::_plot: device not open"));
 
 	if(yy > _size_y)
 		return;
@@ -112,7 +111,7 @@ void DeviceLcd::_plot(char * fb, int yy, int xx, bool on) throw(string)
 	bit  = (yy  & 7);
 
 	if(bit > 7)
-		throw(string("DeviceLcd::_plot: bit > 7"));
+		throw(string("DeviceDm7000::_plot: bit > 7"));
 
 	if(on)
 		fb[byte] |= (1 << bit);
@@ -120,7 +119,7 @@ void DeviceLcd::_plot(char * fb, int yy, int xx, bool on) throw(string)
 		fb[byte] &= ~(1 << bit);
 }
 
-void DeviceLcd::__update() throw(string)
+void DeviceDm7000::__update() throw(string)
 {
 	char * 			framebuffer;
 	ssize_t			framebuffer_size;
@@ -134,17 +133,17 @@ void DeviceLcd::__update() throw(string)
 	char			ch;
 
 	if((_lcd_fd == -1) && (_fp_fd == -1))
-		throw(string("DeviceLcd::__update: device not open"));
+		throw(string("DeviceDm7000::__update: device not open"));
 
 	v = _standout ? 255 : 92;
 
 	if(ioctl(_fp_fd, FP_IOCTL_LCD_DIMM, &v))
-		throw(string("DeviceLcd::__update: cannot set brightness"));
+		throw(string("DeviceDm7000::__update: cannot set brightness"));
 
 	framebuffer_size = _size_x * _size_y / 8;
 
 	if(!(framebuffer = (char *)malloc(framebuffer_size)))
-		throw(string("DeviceLcd::__update::malloc"));
+		throw(string("DeviceDm7000::__update::malloc"));
 
 	memset(framebuffer, 0, framebuffer_size);
 
@@ -157,10 +156,10 @@ void DeviceLcd::__update() throw(string)
 			ch		= _textbuffer[char_x + (char_y * width())];
 
 			if(!!(error = FT_Load_Char(_ft_face, ch, FT_LOAD_RENDER | FT_LOAD_MONOCHROME)))
-				throw(string("DeviceLcd::__update::FT_Load_Char"));
+				throw(string("DeviceDm7000::__update::FT_Load_Char"));
 
 			if(slot->bitmap.pixel_mode != ft_pixel_mode_mono)
-				throw(string("DeviceLcd::__update: bit mode wrong"));
+				throw(string("DeviceDm7000::__update: bit mode wrong"));
 
 			fontptr = static_cast<typeof(fontptr)>(slot->bitmap.buffer);
 
@@ -194,7 +193,7 @@ void DeviceLcd::__update() throw(string)
 	}
 
 	if(::write(_lcd_fd, framebuffer, framebuffer_size) != framebuffer_size)
-		throw(string("DeviceLcd::__update::write"));
+		throw(string("DeviceDm7000::__update::write"));
 
 	free(framebuffer);
 }

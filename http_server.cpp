@@ -136,8 +136,12 @@ int HttpServer::send_raw(MHD_Connection * connection, int http_code,
 {
 	int						rv;
 	struct MHD_Response	*	response;
+	char *					buffer;
 
-	response = MHD_create_response_from_data(data.size(), (void *)data.c_str(), MHD_NO, MHD_YES);
+	buffer = (char *)alloca(data.size() + 1);
+	strcpy(buffer, data.c_str());
+
+	response = MHD_create_response_from_data(data.size(), buffer, MHD_NO, MHD_YES);
 	MHD_add_response_header(response, "Content-Type", data_mime.c_str());
 
 	if(cookie_id.size())

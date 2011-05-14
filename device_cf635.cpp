@@ -91,7 +91,7 @@ void DeviceCF635::_initserial() throw(string)
 	if(tcgetattr(_fd, &tio) == 1)
 		throw(string("DeviceCF635::DeviceCF635::tcgetattr"));
 
-	tio.c_iflag &=	~(BRKINT|PARMRK|INPCK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF|IUCLC|IUTF8);
+	tio.c_iflag &=	~(BRKINT|PARMRK|INPCK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF|IUCLC);
 	tio.c_iflag |=	IGNPAR | IGNBRK;
 
 	tio.c_oflag &=	~(OPOST|ONLCR|OCRNL|ONOCR|ONLRET|OFILL|OFDEL|NLDLY|CRDLY|TABDLY|BSDLY|VTDLY|FFDLY|OLCUC);

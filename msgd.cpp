@@ -46,7 +46,7 @@ using std::string;
 #include "device_sure.h"
 #endif
 
-#if defined(DEVICE_LCD)
+#if defined(DEVICE_DM7000)
 #include "device_lcd.h"
 #endif
 
@@ -122,8 +122,8 @@ static Device * new_device(string devicetype, string devicenode, __attribute__((
 		dev = new DeviceSure(devicenode);
 #endif
 #ifdef DEVICE_LCD
-	if(devicetype == "lcd")
-		dev = new DeviceLcd(devicenode);
+	if(devicetype == "dm7000")
+		dev = new DeviceDM7000(devicenode);
 #endif
 	return(dev);
 }
@@ -174,8 +174,8 @@ int main(int argc, char ** argv)
 	devices += " sure";
 #endif
 
-#if defined(DEVICE_LCD)
-	devices += " lcd";
+#if defined(DEVICE_DM7000)
+	devices += " dm7000";
 #endif
 
 		while((opt = getopt(argc, argv, "fd:D:k:")) != -1)
