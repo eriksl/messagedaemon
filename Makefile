@@ -2,7 +2,7 @@
 
 TARGET	= x86_64
 DEBUG	= off
-AOUT	= msgd
+PROGRAM	= msgd
 OBJS	= msgd.o device.o textentry.o http_server.o http_page.o syslog.o stringstringmap.o
 DEPS	= .msgd.d .device.d .textentry.d .http_server.d .http_page.d .syslog.d .stringstringmap.d
 

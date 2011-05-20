@@ -1,0 +1,14 @@
+Package: msgd
+Version: xxxxxx
+Architecture: x86_64
+Maintainer: Erik Slagter <erik@slagter.name>
+Installed-Size: 256
+Depends: libc6 (>= 2.2), lsb-base (>= 3.0)
+Section: net
+Priority: optional
+Homepage: http://messagedaemon.sourceforge.net
+Vcs-git: http://git.code.sf.net/p/messagedaemon/code
+Description: Messagedaemon
+ Messagedaemon, a simple program to receive messages
+ from the network and display these round-robin on
+ varies LCD/VFD type displays.

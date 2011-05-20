@@ -34,11 +34,35 @@ endif
 CC	= $(EXECPREFIX)gcc
 CPP	= $(EXECPREFIX)g++
 
-.PHONY:		all depend clean install
+.PHONY:		all depend clean install rpm dpkg
 
-all:		depend $(AOUT)
+DATE			=	`date '+%Y%m%d'`
+VERSION			=	git-$(DATE)
 
+
+RPM				=	`pwd`/rpm
+RPMTARBALL		=	$(RPM)/$(PROGRAM).tar
+RPMPKGDIR		=	$(RPM)/$(TARGET)
+RPMDEBUGDIR		=	$(RPMPKGDIR)/debug
+RPMBUILDDIR		=	$(RPM)/build
+RPMTMP			=	$(RPM)/tmp
+RPMSPEC			=	$(RPM)/$(PROGRAM).spec
+
+DPKG			=	`pwd`/dpkg
+DPKGTARBALL 	=	$(DPKG)/$(PROGRAM).tar
+DPKGPKGDIR		=	$(DPKG)/$(TARGET)
+DPKGBUILDDIR	=	$(DPKG)/build
+DPKGDESTDIR		=	$(DPKGBUILDDIR)/dpkg
+DPKGDEBIANDIR	=	$(DPKGDESTDIR)/DEBIAN
+DPKGCONTROL		=	$(DPKGDEBIANDIR)/control
+DPKGCHANGELOG	=	$(DPKGDEBIANDIR)/changelog
+
+all:		depend $(PROGRAM)
+
+ifeq ($(OBJ), "")
+else
 -include .deps
+endif
 
 depend:		.deps
 
@@ -55,15 +79,69 @@ depend:		.deps
 			@echo "CPP $< -> $@"
 			@$(CPP) $(CPPFLAGS) -c $< -o $@
 
-$(AOUT):	$(OBJS)
+$(PROGRAM):	$(OBJS)
 			@echo "LD $@"
 			@$(CPP) $(LDFLAGS) $^ $(LDLIBS) -o $@ 
 
-install:	$(AOUT)
-			@echo "INSTALL $(AOUT)"
-			sudo install -o root -g root -m 755 -s $(AOUT) /usr/local/bin
+install:	$(PROGRAM)
+			@echo "INSTALL $(PROGRAM) -> $(DESTDIR)/usr/bin"
+			@mkdir -p $(DESTDIR)/usr/bin
+			@cp $(PROGRAM) $(DESTDIR)/usr/bin
+			@-chown root:root $(DESTDIR)/usr/bin/$(PROGRAM)
+			@-chmod 755 $(DESTDIR)/usr/bin/$(PROGRAM)
 
 clean:
-			@echo "CLEAN $(OBJS) $(DEPS) $(AOUT)"
-			@rm $(OBJS) $(DEPS) $(AOUT) .deps 2> /dev/null || true
+			@echo "CLEAN"
+			@-rm -rf rpm/$(TARGET) 2> /dev/null
+			@git clean -f -d -q
 
+rpm:
+#
+			@echo "PREPARE $(VERSION)"
+			@-rm -f $(RPMPKGDIR) $(RPMBUILDDIR) $(RPMTMP) 2> /dev/null || true
+			@mkdir -p $(RPMPKGDIR) $(RPMBUILDDIR) $(RPMTMP)
+			@sed --in-place=.bak $(RPMSPEC) -e "s/%define dateversion.*/%define dateversion $(DATE)/"
+#
+			@echo "TAR $(RPMTARBALL)"
+			@-rm -f $(RPMTARBALL) 2> /dev/null
+			@git archive --prefix=$(PROGRAM)/ -o $(RPMTARBALL) HEAD
+#
+			@echo "CREATE RPM $(RPMSPEC)"
+			@rpmbuild -bb $(RPMSPEC)
+#
+			@-rm -rf $(RPMDEBUGDIR) 2> /dev/null || true
+			@-mkdir -p $(RPMDEBUGDIR) 2> /dev/null || true
+			@-mv rpm/$(TARGET)/$(PROGRAM)-debuginfo-*.rpm rpm/$(TARGET)/debug 2> /dev/null || true
+			@-rm -rf $(RPMBUILDDIR) $(RPMTMP)
+
+dpkg:
+#
+			@echo "PREPARE $(VERSION)"
+			@-rm -f $(DPKGPKGDIR) $(DPKGBUILDDIR) 2> /dev/null || true
+			@mkdir -p $(DPKGPKGDIR) $(DPKGBUILDDIR)
+#
+			@echo "TAR $(DPKGTARBALL)"
+			@-rm -f $(DPKGTARBALL) 2> /dev/null
+			@git archive -o $(DPKGTARBALL) HEAD
+			@tar xf $(DPKGTARBALL) -C $(DPKGBUILDDIR)
+#
+			@echo "CHANGELOG $(DPKGCHANGELOG)"
+			@-rm -f $(DPKGCHANGELOG) 2> /dev/null
+			@mkdir -p $(DPKGDEBIANDIR)
+			@echo "$(PROGRAM) ($(VERSION)) stable; urgency=low" > $(DPKGCHANGELOG)
+			@echo >> $(DPKGCHANGELOG)
+			@git log | head -100 >> $(DPKGCHANGELOG)
+			@sed --in-place=.bak $(DPKGCONTROL) -e "s/^Version:.*/Version: `date "+%Y%m%d"`/"
+			@sed --in-place=.bak $(DPKGCONTROL) -e "s/^Architecture:.*/Architecture: $(TARGET)/"
+#
+			@echo "BUILD $(DPKGBUILDDIR)"
+			$(MAKE) -C $(DPKGBUILDDIR) all
+#
+			@echo "CREATE DEB"
+			@fakeroot /bin/sh -c "\
+				$(MAKE) -C $(DPKGBUILDDIR) DESTDIR=$(DPKGDESTDIR) install; \
+				dpkg --build $(DPKGDESTDIR) $(DPKGPKGDIR)"
+
+rpminstall:
+			@echo "INSTALL"
+			@sudo rpm -Uvh --force rpm/$(TARGET)/*.rpm
