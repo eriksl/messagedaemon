@@ -1,4 +1,4 @@
-WARNINGS		= -Wall -Wextra -Wshadow -Wundef -Wformat=2 -Winit-self -Wunused -Werror -Wno-error=unused-but-set-variable -Wpointer-arith -Wcast-qual -Wmultichar
+WARNINGS		= -Wall -Wextra -Wshadow -Wundef -Wformat=2 -Winit-self -Wunused -Werror -Wpointer-arith -Wcast-qual -Wmultichar
 
 ifneq ($(DEBUG), on)
 CPPFLAGS		+= -O2 $(WARNINGS)
@@ -36,9 +36,8 @@ CPP	= $(EXECPREFIX)g++
 
 .PHONY:		all depend clean install rpm dpkg
 
-DATE			=	`date '+%Y%m%d'`
-VERSION			=	git-$(DATE)
-
+DATE			=	`date '+%Y%m%d%H%M'`
+VERSION			=	daily-$(DATE)
 
 RPM				=	`pwd`/rpm
 RPMTARBALL		=	$(RPM)/$(PROGRAM).tar
@@ -46,20 +45,24 @@ RPMPKGDIR		=	$(RPM)/$(TARGET)
 RPMDEBUGDIR		=	$(RPMPKGDIR)/debug
 RPMBUILDDIR		=	$(RPM)/build
 RPMTMP			=	$(RPM)/tmp
-RPMSPEC			=	$(RPM)/$(PROGRAM).spec
+RPMSPECIN		=	$(RPM)/$(PROGRAM).spec
+RPMSPECOUTDIR	=	$(RPMBUILDDIR)/rpm
+RPMSPECOUT		=	$(RPMSPECOUTDIR)/$(PROGRAM).spec
 
 DPKG			=	`pwd`/dpkg
 DPKGTARBALL 	=	$(DPKG)/$(PROGRAM).tar
+DPKGDEBIANDIR	=	$(DPKG)/DEBIAN
+DPKGCONFIGURE	=	$(DPKG)/configure.dpkg
 DPKGPKGDIR		=	$(DPKG)/$(TARGET)
 DPKGBUILDDIR	=	$(DPKG)/build
-DPKGDESTDIR		=	$(DPKGBUILDDIR)/dpkg
-DPKGDEBIANDIR	=	$(DPKGDESTDIR)/DEBIAN
-DPKGCONTROL		=	$(DPKGDEBIANDIR)/control
-DPKGCHANGELOG	=	$(DPKGDEBIANDIR)/changelog
+DPKGDESTDIR		=	$(DPKGBUILDDIR)/dpkg/root
+DPKGDEBIANDESTD	=	$(DPKGDESTDIR)/DEBIAN
+DPKGCHANGELOG	=	$(DPKGDEBIANDESTD)/changelog
+DPKGCONTROL		=	$(DPKGDEBIANDESTD)/control
 
 all:		depend $(PROGRAM)
 
-ifeq ($(OBJ), "")
+ifeq ($(DEPS), "")
 else
 -include .deps
 endif
@@ -67,7 +70,7 @@ endif
 depend:		.deps
 
 .deps:		$(DEPS)
-			@cat $^ > $@
+			@cat $^ /dev/null > $@
 
 .%.d:		%.cpp
 			@$(CPP) $(CPPFLAGS) -M $^ -o $@
@@ -92,22 +95,23 @@ install:	$(PROGRAM)
 
 clean:
 			@echo "CLEAN"
-			@-rm -rf rpm/$(TARGET) 2> /dev/null
-			@git clean -f -d -q
+			@-git clean -f -d -q 2> /dev/null || true
+			rm -f $(PROGRAM) $(OBJS) 2> /dev/null || true
 
 rpm:
 #
 			@echo "PREPARE $(VERSION)"
-			@-rm -f $(RPMPKGDIR) $(RPMBUILDDIR) $(RPMTMP) 2> /dev/null || true
-			@mkdir -p $(RPMPKGDIR) $(RPMBUILDDIR) $(RPMTMP)
-			@sed --in-place=.bak $(RPMSPEC) -e "s/%define dateversion.*/%define dateversion $(DATE)/"
+			@-rm -rf $(RPMPKGDIR) $(RPMBUILDDIR) $(RPMTMP) 2> /dev/null || true
+			@mkdir -p $(RPMPKGDIR) $(RPMBUILDDIR) $(RPMTMP) $(RPMSPECOUTDIR)
+			@sed $(RPMSPECIN) -e "s/%define dateversion.*/%define dateversion $(DATE)/" > $(RPMSPECOUT)
 #
 			@echo "TAR $(RPMTARBALL)"
 			@-rm -f $(RPMTARBALL) 2> /dev/null
-			@git archive --prefix=$(PROGRAM)/ -o $(RPMTARBALL) HEAD
+#			tar cf $(RPMTARBALL) -C .. --exclude rpm --exclude .git $(PROGRAM)
+			tar cf $(RPMTARBALL) -C .. --exclude rpm $(PROGRAM)
 #
-			@echo "CREATE RPM $(RPMSPEC)"
-			@rpmbuild -bb $(RPMSPEC)
+			@echo "CREATE RPM $(RPMSPECOUT)"
+			@rpmbuild -bb $(RPMSPECOUT)
 #
 			@-rm -rf $(RPMDEBUGDIR) 2> /dev/null || true
 			@-mkdir -p $(RPMDEBUGDIR) 2> /dev/null || true
@@ -117,7 +121,7 @@ rpm:
 dpkg:
 #
 			@echo "PREPARE $(VERSION)"
-			@-rm -f $(DPKGPKGDIR) $(DPKGBUILDDIR) 2> /dev/null || true
+			@-rm -f $(DPKGPKGDIR) $(DPKGBUILDDIR) $(DPKGDESTDIR) 2> /dev/null || true
 			@mkdir -p $(DPKGPKGDIR) $(DPKGBUILDDIR)
 #
 			@echo "TAR $(DPKGTARBALL)"
@@ -125,17 +129,23 @@ dpkg:
 			@git archive -o $(DPKGTARBALL) HEAD
 			@tar xf $(DPKGTARBALL) -C $(DPKGBUILDDIR)
 #
+			@echo "DUP $(DPKGDEBIANDIR)"
+			@mkdir -p $(DPKGDEBIANDESTD)
+			@cp $(DPKGDEBIANDIR)/* $(DPKGDEBIANDESTD)
+#
 			@echo "CHANGELOG $(DPKGCHANGELOG)"
 			@-rm -f $(DPKGCHANGELOG) 2> /dev/null
-			@mkdir -p $(DPKGDEBIANDIR)
 			@echo "$(PROGRAM) ($(VERSION)) stable; urgency=low" > $(DPKGCHANGELOG)
 			@echo >> $(DPKGCHANGELOG)
 			@git log | head -100 >> $(DPKGCHANGELOG)
-			@sed --in-place=.bak $(DPKGCONTROL) -e "s/^Version:.*/Version: `date "+%Y%m%d"`/"
-			@sed --in-place=.bak $(DPKGCONTROL) -e "s/^Architecture:.*/Architecture: $(TARGET)/"
+			@sed --in-place $(DPKGCONTROL) -e "s/^Version:.*/Version: `date "+%Y%m%d"`/"
+			@sed --in-place $(DPKGCONTROL) -e "s/^Architecture:.*/Architecture: $(TARGET)/"
+#
+			@echo "CONFIGURE $(DPKGCONFIGURE)"
+			@(cd $(DPKGBUILDDIR); $(DPKGCONFIGURE))
 #
 			@echo "BUILD $(DPKGBUILDDIR)"
-			$(MAKE) -C $(DPKGBUILDDIR) all
+			@$(MAKE) -C $(DPKGBUILDDIR) all
 #
 			@echo "CREATE DEB"
 			@fakeroot /bin/sh -c "\

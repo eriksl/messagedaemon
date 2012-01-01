@@ -1,4 +1,4 @@
-%define dateversion 20111227
+%define dateversion 20120101
 %define rel 1ems
 
 %define prefix /usr
