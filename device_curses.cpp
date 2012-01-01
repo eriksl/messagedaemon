@@ -62,7 +62,8 @@ void DeviceCurses::__close()
 
 int DeviceCurses::width() const
 {
-	int xx, yy;
+	int xx;
+	int yy __attribute__((unused));
 
 	getmaxyx(_content, yy, xx);
 	return(xx);
@@ -70,7 +71,8 @@ int DeviceCurses::width() const
 
 int DeviceCurses::height() const
 {
-	int xx, yy;
+	int xx __attribute__((unused));
+	int yy;
 
 	getmaxyx(_content, yy, xx);
 	return(yy);
