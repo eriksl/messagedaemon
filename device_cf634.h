@@ -19,7 +19,7 @@ class DeviceCF634 : public Device
 		void	__close();
 
 		void	_initserial() throw(string);
-		void	_command(int a, int b = -1, int c = -1, int d = -1) throw(string);
+		void	_command(int a, int b = -1, int c = -1) throw(string);
 
 	public:
 

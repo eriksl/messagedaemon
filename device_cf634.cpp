@@ -107,36 +107,39 @@ void DeviceCF634::_initserial() throw(string)
 		throw(string("DeviceCF634::DeviceCF634::tcsetattr"));
 }
 
-void DeviceCF634::_command(int a, int b, int c, int d) throw(string)
+void DeviceCF634::_command(int a, int b, int c) throw(string)
 {
-	char commandstr[8];
-	ssize_t length = 1;
+	char command;
 
 	if(_fd == -1)
 		throw(string("DeviceCF634::_command: fd not open"));
 
-	commandstr[0] = a;
+	if(a != -1)
+	{
+		command = (char)(a & 0xff);
+		if(::write(_fd, &command, 1) != 1)
+			throw(string("DeviceCF634::command::write"));
+
+		usleep(100000);
+	}
 
 	if(b != -1)
 	{
-		commandstr[1] = b;
-		length++;
+		command = (char)(b & 0xff);
+		if(::write(_fd, &command, 1) != 1)
+			throw(string("DeviceCF634::command::write"));
 
-		if(c != -1)
-		{
-			commandstr[2] = c;
-			length++;
-
-			if(d != -1)
-			{
-				commandstr[3] = d;
-				length++;
-			}
-		}
+		usleep(100000);
 	}
 
-	if(::write(_fd, commandstr, length) != length)
-		throw(string("DeviceCF634::command::write"));
+	if(c != -1)
+	{
+		command = (char)(c & 0xff);
+		if(::write(_fd, &command, 1) != 1)
+			throw(string("DeviceCF634::command::write"));
+
+		usleep(100000);
+	}
 }
 
 int DeviceCF634::width() const
@@ -164,6 +167,11 @@ void DeviceCF634::__update() throw(string)
 
 	if(_standout)
 		_command(15, 100);		// high contrast
+
+	_command(3);				// display on
+	_command(4);				// cursor off
+	_command(20);				// scroll off
+	_command(24);				// wrap off
 
 	for(yy = 0; yy < height(); yy++)
 	{
