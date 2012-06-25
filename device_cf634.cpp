@@ -120,7 +120,7 @@ void DeviceCF634::_command(int a, int b, int c) throw(string)
 		if(::write(_fd, &command, 1) != 1)
 			throw(string("DeviceCF634::command::write"));
 
-		usleep(100000);
+		usleep(10000);
 	}
 
 	if(b != -1)
@@ -129,7 +129,7 @@ void DeviceCF634::_command(int a, int b, int c) throw(string)
 		if(::write(_fd, &command, 1) != 1)
 			throw(string("DeviceCF634::command::write"));
 
-		usleep(100000);
+		usleep(10000);
 	}
 
 	if(c != -1)
@@ -138,7 +138,7 @@ void DeviceCF634::_command(int a, int b, int c) throw(string)
 		if(::write(_fd, &command, 1) != 1)
 			throw(string("DeviceCF634::command::write"));
 
-		usleep(100000);
+		usleep(10000);
 	}
 }
 
