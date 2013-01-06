@@ -37,8 +37,10 @@ void DeviceCF635::__open() throw(string)
 	if(_fd != -1)
 		throw(string("DeviceCf635::__open: device not closed"));
 
-	if((_fd = ::open(_device_node.c_str(), O_RDWR | O_NOCTTY, 0)) < 0)
+	if((_fd = ::open(_device_node.c_str(), O_RDWR | O_NOCTTY | O_EXCL, 0)) < 0)
 		throw(string("DeviceCF635::DeviceCF635::__open"));
+
+	ioctl(_fd, TIOCEXCL, 1);
 
 	_initserial();
 	_ping();

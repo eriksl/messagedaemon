@@ -34,8 +34,10 @@ void DeviceMatrixCommon::__open() throw(string)
 	if(_fd != -1)
 		throw(string("DeviceMatrixCommon::__open: device not closed"));
 
-	if((_fd = ::open(_device_node.c_str(), O_RDWR, 0)) < 0)
+	if((_fd = ::open(_device_node.c_str(), O_RDWR | O_NOCTTY | O_EXCL, 0)) < 0)
 		throw(string("DeviceMatrixCommon::DeviceMatrixCommon::open(") + _device_node + ")");
+
+	ioctl(_fd, TIOCEXCL, 1);
 
 	_initserial();
 	__init();
