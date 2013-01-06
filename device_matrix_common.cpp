@@ -14,6 +14,7 @@
 
 DeviceMatrixCommon::DeviceMatrixCommon() throw(string)
 {
+	_brightness = 1;
 	_fd = -1;
 }
 
