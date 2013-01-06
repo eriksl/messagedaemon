@@ -228,17 +228,17 @@ int main(int argc, char ** argv)
 			exit(-1);
 		}
 
+		if(!foreground)
+			daemon(0, 0);
+
+		setresuid(65534, 65534, 65534);
+
 		device->open();
 
 		deviceid = device->identify();
 
 		signal(SIGINT, sigint);
 		signal(SIGTERM, sigterm);
-
-		if(!foreground)
-			daemon(0, 0);
-
-		setresuid(65534, 65534, 65534);
 
 		TextEntries text_entries;
 
