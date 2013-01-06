@@ -111,6 +111,7 @@ void DeviceCF634::_initserial() throw(string)
 
 void DeviceCF634::_command(int a, int b, int c) throw(string)
 {
+	int timeout = 5000;
 	char command;
 
 	if(_fd == -1)
@@ -122,7 +123,7 @@ void DeviceCF634::_command(int a, int b, int c) throw(string)
 		if(::write(_fd, &command, 1) != 1)
 			throw(string("DeviceCF634::command::write"));
 
-		usleep(10000);
+		usleep(timeout);
 	}
 
 	if(b != -1)
@@ -131,7 +132,7 @@ void DeviceCF634::_command(int a, int b, int c) throw(string)
 		if(::write(_fd, &command, 1) != 1)
 			throw(string("DeviceCF634::command::write"));
 
-		usleep(10000);
+		usleep(timeout);
 	}
 
 	if(c != -1)
@@ -140,7 +141,7 @@ void DeviceCF634::_command(int a, int b, int c) throw(string)
 		if(::write(_fd, &command, 1) != 1)
 			throw(string("DeviceCF634::command::write"));
 
-		usleep(10000);
+		usleep(timeout);
 	}
 }
 
