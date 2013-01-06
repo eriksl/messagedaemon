@@ -77,7 +77,7 @@ int DeviceSure::height() const
 	return(4);
 }
 
-size_t DeviceSure::_pollread(size_t size, char * buffer) const throw(string)
+size_t DeviceSure::_pollread(size_t size, uint8_t * buffer) const throw(string)
 {
 	int				rv;
 	struct pollfd	pfd = { _fd, POLLIN, 0 };
@@ -104,7 +104,7 @@ size_t DeviceSure::_pollread(size_t size, char * buffer) const throw(string)
 	return(rv);
 }
 
-size_t DeviceSure::_pollwrite(size_t size, const char * buffer) const throw(string)
+size_t DeviceSure::_pollwrite(size_t size, const uint8_t * buffer) const throw(string)
 {
 	int				rv;
 	struct pollfd	pfd = { _fd, POLLOUT, 0 };
@@ -179,7 +179,7 @@ void DeviceSure::_initserial() throw(string)
 
 void DeviceSure::_init() throw(string)
 {
-	char command[32] = { 0xfe, 0x53, 0x75, 0x72, 0x65 }; // establish communication
+	uint8_t command[32] = { 0xfe, 0x53, 0x75, 0x72, 0x65 }; // establish communication
 
 	if(_fd == -1)
 		throw(string("DeviceSure::_init: device not open"));
@@ -246,7 +246,7 @@ void DeviceSure::_setbright(int value) throw(string)
 		253		//	bright
 	};
 
-	char command[16];
+	uint8_t command[16];
 	int length = 0;
 
 	if(_fd == -1)
@@ -277,8 +277,8 @@ void DeviceSure::__update() throw(string)
 {
 	static const int bright2standout[] = { 0, 2, 3, 4, 4 };
 	int		xx, yy;
-	char	current;
-	char	line[width() + 8];
+	uint8_t	current;
+	uint8_t	line[width() + 8];
 
 	if(_fd == -1)
 		throw(string("DeviceSure::__update: device not open"));
@@ -319,8 +319,8 @@ int DeviceSure::max_analog() const throw()
 
 int DeviceSure::__read_analog(int) throw(string)
 {
-	char	command[16];
-	char *	cptr;
+	uint8_t	command[16];
+	uint8_t *	cptr;
 	int		tries;
 	bool	done;
 	int		rv;

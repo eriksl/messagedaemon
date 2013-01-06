@@ -23,8 +23,8 @@ class DeviceSure : public Device
 		void	_init() throw(string);
 		void	_setbright(int value) throw(string);
 
-		size_t	_pollread(size_t size, char * buffer) const throw(string);
-		size_t	_pollwrite(size_t size, const char * buffer) const throw(string);
+		size_t	_pollread(size_t size, uint8_t * buffer) const throw(string);
+		size_t	_pollwrite(size_t size, const uint8_t * buffer) const throw(string);
 
 	protected:
 
