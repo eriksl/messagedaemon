@@ -17,7 +17,7 @@ ifeq ($(TARGET), x86_64)
 	ENABLE_DEVICE_SURE		= 1
 	ENABLE_DEVICE_DM7000	= 0
 	CPPFLAGS				+= -DMHD_mode_multithread
-	LDLIBS					+= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
+	LDLIBS					+= -lmicrohttpd -lpthread
 endif
 
 ifeq ($(TARGET), i386)
@@ -31,7 +31,7 @@ ifeq ($(TARGET), i386)
 	ENABLE_DEVICE_SURE		= 1
 	ENABLE_DEVICE_DM7000	= 0
 	CPPFLAGS				+= -DMHD_mode_multithread
-	LDLIBS					+= -Wl,-Bstatic -lmicrohttpd -Wl,-Bdynamic -lpthread
+	LDLIBS					+= -lmicrohttpd -lpthread
 endif
 
 ifeq ($(TARGET), mipsel)
