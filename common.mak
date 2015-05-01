@@ -105,11 +105,11 @@ $(PROGRAM):	$(OBJS)
 			@$(CPP) $(LDFLAGS) $^ $(LDLIBS) -o $@ 
 
 install:	$(PROGRAM)
-			@echo "INSTALL $(PROGRAM) -> $(DESTDIR)/bin"
-			@mkdir -p $(DESTDIR)/bin
-			@cp $(PROGRAM) $(DESTDIR)/bin
-			@-chown root:root $(DESTDIR)/bin/$(PROGRAM)
-			@-chmod 755 $(DESTDIR)/bin/$(PROGRAM)
+			@echo "INSTALL $(PROGRAM) -> $(DESTDIR)"
+			@mkdir -p $(DESTDIR)
+			@cp $(PROGRAM) $(DESTDIR)
+			@-chown root:root $(DESTDIR)/$(PROGRAM) || true
+			@-chmod 755 $(DESTDIR)/$(PROGRAM) || true
 
 clean:
 			@echo "CLEAN"

@@ -30,7 +30,7 @@ make %{?_smp_mflags} msgd
 
 %install
 rm -rf %{buildroot}
-make DESTDIR=%{buildroot} install
+make DESTDIR=%{buildroot}/%{bindir} install
 
 %clean
 rm -rf %{buildroot}
