@@ -356,7 +356,7 @@ next_id:
 
 						case(2):
 						{
-							snprintf(datebuf, sizeof(datebuf), "[%d]   ", (int)text_entries.size());
+							snprintf(datebuf, sizeof(datebuf), "(%d)   ", (int)text_entries.size());
 							break;
 						}
 					}
