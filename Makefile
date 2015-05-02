@@ -8,6 +8,7 @@ DEPS	= .msgd.d .device.d .textentry.d .http_server.d .http_page.d .syslog.d .str
 
 ifeq ($(TARGET), x86_64)
 	ENABLE_DEVICE_TTY		= 1
+	ENABLE_DEVICE_NET		= 1
 	ENABLE_DEVICE_CURSES	= 1
 	ENABLE_DEVICE_GTK		= 0
 	ENABLE_DEVICE_MATRIX	= 1
@@ -22,6 +23,7 @@ endif
 
 ifeq ($(TARGET), i386)
 	ENABLE_DEVICE_TTY		= 1
+	ENABLE_DEVICE_NET		= 1
 	ENABLE_DEVICE_CURSES	= 1
 	ENABLE_DEVICE_GTK		= 0
 	ENABLE_DEVICE_MATRIX	= 1
@@ -36,6 +38,7 @@ endif
 
 ifeq ($(TARGET), mipsel)
 	ENABLE_DEVICE_TTY		= 1
+	ENABLE_DEVICE_NET		= 0
 	ENABLE_DEVICE_CURSES	= 0
 	ENABLE_DEVICE_GTK		= 0
 	ENABLE_DEVICE_MATRIX	= 1
@@ -50,6 +53,7 @@ endif
 
 ifeq ($(TARGET), ppc)
 	ENABLE_DEVICE_TTY		= 1
+	ENABLE_DEVICE_NET		= 0
 	ENABLE_DEVICE_CURSES	= 0
 	ENABLE_DEVICE_GTK		= 0
 	ENABLE_DEVICE_MATRIX	= 1
@@ -72,6 +76,12 @@ ifeq ($(ENABLE_DEVICE_TTY),1)
 	OBJS		+= device_tty.o
 	DEPS		+= .device_tty.d
 	CPPFLAGS	+= -DDEVICE_TTY
+endif
+
+ifeq ($(ENABLE_DEVICE_NET),1)
+	OBJS		+= device_net.o
+	DEPS		+= .device_net.d
+	CPPFLAGS	+= -DDEVICE_NET
 endif
 
 ifeq ($(ENABLE_DEVICE_CURSES),1)

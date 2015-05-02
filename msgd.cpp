@@ -18,6 +18,10 @@ using std::string;
 #include "device_tty.h"
 #endif
 
+#if defined(DEVICE_NET)
+#include "device_net.h"
+#endif
+
 #if defined(DEVICE_CURSES)
 #include "device_curses.h"
 #endif
@@ -90,6 +94,12 @@ static Device * new_device(string devicetype, string devicenode, __attribute__((
 		dev = new DeviceTty();
 	}
 #endif
+#ifdef DEVICE_NET
+	if(devicetype == "net")
+	{
+		dev = new DeviceNet(devicenode);
+	}
+#endif
 #ifdef DEVICE_CURSES
 	if(devicetype == "curses")
 	{
@@ -145,35 +155,30 @@ int main(int argc, char ** argv)
 #if defined(DEVICE_TTY)
 	devices += " tty";
 #endif
-
+#if defined(DEVICE_NET)
+	devices += " net";
+#endif
 #if defined(DEVICE_CURSES)
 	devices += " curses";
 #endif
-
 #if defined(DEVICE_GTK)
 	devices += " gtk";
 #endif
-
 #if defined(DEVICE_MATRIX)
 	devices += " matrix";
 #endif
-
 #if defined(DEVICE_MUIN)
 	devices += " muin";
 #endif
-
 #if defined(DEVICE_CF634)
 	devices += " cf634";
 #endif
-
 #if defined(DEVICE_CF635)
 	devices += " cf635";
 #endif
-
 #if defined(DEVICE_SURE)
 	devices += " sure";
 #endif
-
 #if defined(DEVICE_DM7000)
 	devices += " dm7000";
 #endif
