@@ -18,8 +18,8 @@ using std::string;
 #include "device_tty.h"
 #endif
 
-#if defined(DEVICE_NET)
-#include "device_net.h"
+#if defined(DEVICE_ESP)
+#include "device_esp.h"
 #endif
 
 #if defined(DEVICE_CURSES)
@@ -94,10 +94,10 @@ static Device * new_device(string devicetype, string devicenode, __attribute__((
 		dev = new DeviceTty();
 	}
 #endif
-#ifdef DEVICE_NET
-	if(devicetype == "net")
+#ifdef DEVICE_ESP
+	if(devicetype == "esp")
 	{
-		dev = new DeviceNet(devicenode);
+		dev = new DeviceESP(devicenode);
 	}
 #endif
 #ifdef DEVICE_CURSES
@@ -155,8 +155,8 @@ int main(int argc, char ** argv)
 #if defined(DEVICE_TTY)
 	devices += " tty";
 #endif
-#if defined(DEVICE_NET)
-	devices += " net";
+#if defined(DEVICE_ESP)
+	devices += " esp";
 #endif
 #if defined(DEVICE_CURSES)
 	devices += " curses";
