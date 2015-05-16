@@ -3,3 +3,5 @@
 /msgd
 /*.d
 /.deps
+/BUILDROOT
+/rpm
